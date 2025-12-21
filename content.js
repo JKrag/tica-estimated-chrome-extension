@@ -98,17 +98,28 @@
     return /est_cat\d*\.htm$/i.test(path);
   }
 
-  // Check if a table appears to be a championship cat table (for regional pages)
-  function isChampionshipTable(table) {
-    // Look for header text indicating championship cats
-    const prevElement = table.previousElementSibling;
-    if (prevElement) {
-      const text = prevElement.textContent.toLowerCase();
-      if (text.includes('championship') || text.includes('cats')) {
-        return true;
-      }
-    }
-    return false;
+  // Check if a row is a section header (has colspan and contains section name)
+  function isSectionHeader(row) {
+    const firstCell = row.querySelector('th, td');
+    if (!firstCell) return false;
+    const colspan = firstCell.getAttribute('colspan');
+    if (!colspan || parseInt(colspan) < 2) return false;
+
+    const text = firstCell.textContent.trim().toLowerCase();
+    // Check for known section names
+    return text === 'kittens' || text === 'championship cats' || text === 'cats' ||
+           text === 'alters' || text.includes('household');
+  }
+
+  // Get section name from a header row
+  function getSectionName(row) {
+    const firstCell = row.querySelector('th, td');
+    return firstCell ? firstCell.textContent.trim().toLowerCase() : '';
+  }
+
+  // Check if a section is for championship cats
+  function isChampionshipSection(sectionName) {
+    return sectionName === 'championship cats' || sectionName === 'cats';
   }
 
   // Find the breed code column index by looking for the "Breed" header
@@ -174,24 +185,34 @@
     const isChampionshipPage = isChampionshipCatPage();
 
     for (const table of tables) {
-      // Get all rows and filter to only data rows (those with td elements)
-      const allRows = table.querySelectorAll('tr');
-      const rows = Array.from(allRows).filter(row => row.querySelector('td'));
+      const allRows = Array.from(table.querySelectorAll('tr'));
 
-      // Skip tables without data rows
-      if (rows.length === 0) continue;
-
-      // Determine if this specific table is for championship cats
-      const isChampionship = isChampionshipPage || isChampionshipTable(table);
+      // Skip tables without rows
+      if (allRows.length === 0) continue;
 
       // Find the breed column index once for this table
       const breedColIndex = findBreedColumnIndex(table);
 
-      // Track shorthair/longhair counts for championship tables
+      // Track current section state
+      let currentSection = isChampionshipPage ? 'cats' : '';  // Default for dedicated cat pages
+      let isChampionship = isChampionshipPage;
       let shorthairCount = 0;
       let longhairCount = 0;
 
-      for (const row of rows) {
+      for (const row of allRows) {
+        // Check if this row is a section header
+        if (isSectionHeader(row)) {
+          currentSection = getSectionName(row);
+          isChampionship = isChampionshipSection(currentSection);
+          // Reset counts for new section
+          shorthairCount = 0;
+          longhairCount = 0;
+          continue;
+        }
+
+        // Skip rows without data cells
+        if (!row.querySelector('td')) continue;
+
         const rank = getRank(row);
         if (rank === null) continue;
 
