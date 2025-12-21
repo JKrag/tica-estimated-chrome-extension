@@ -1,0 +1,75 @@
+/* TICA Estimated Standings Enhancer Styles */
+
+/* Season navigation dropdown */
+.tica-enhancer-dropdown {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin: 10px auto;
+  max-width: 400px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.tica-enhancer-dropdown label {
+  font-weight: bold;
+  color: #333;
+  margin-right: 8px;
+}
+
+.tica-enhancer-dropdown select {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.tica-enhancer-dropdown select:hover {
+  border-color: #666;
+}
+
+.tica-enhancer-dropdown select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 3px rgba(0, 102, 204, 0.3);
+}
+
+/* Top 25 all-breed highlighting - Gold */
+tr.tica-top25 {
+  background-color: #ffd700 !important;
+}
+
+tr.tica-top25 td {
+  background-color: #ffd700 !important;
+}
+
+/* Top 25 coat-length (shorthair/longhair) highlighting - Lighter gold/cream */
+tr.tica-top25-coat {
+  background-color: #fff8dc !important;
+}
+
+tr.tica-top25-coat td {
+  background-color: #fff8dc !important;
+}
+
+/* Ensure text remains readable on highlighted rows */
+tr.tica-top25 td,
+tr.tica-top25 td a,
+tr.tica-top25-coat td,
+tr.tica-top25-coat td a {
+  color: #333 !important;
+}
+
+/* Add subtle border to distinguish highlighted rows */
+tr.tica-top25 td {
+  border-bottom: 1px solid #e6c200;
+}
+
+tr.tica-top25-coat td {
+  border-bottom: 1px solid #e6dfc0;
+}
