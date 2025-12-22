@@ -48,20 +48,31 @@ tr.tica-top25 td {
   background-color: #ffd700 !important;
 }
 
-/* Top 25 coat-length (shorthair/longhair) highlighting - Lighter gold/cream */
-tr.tica-top25-coat {
-  background-color: #fff8dc !important;
+/* Top 25 shorthair runner-up highlighting - Light Teal */
+tr.tica-top25-sh {
+  background-color: #e0f7fa !important;
 }
 
-tr.tica-top25-coat td {
-  background-color: #fff8dc !important;
+tr.tica-top25-sh td {
+  background-color: #e0f7fa !important;
+}
+
+/* Top 25 longhair runner-up highlighting - Light Pink */
+tr.tica-top25-lh {
+  background-color: #fce4ec !important;
+}
+
+tr.tica-top25-lh td {
+  background-color: #fce4ec !important;
 }
 
 /* Ensure text remains readable on highlighted rows */
 tr.tica-top25 td,
 tr.tica-top25 td a,
-tr.tica-top25-coat td,
-tr.tica-top25-coat td a {
+tr.tica-top25-sh td,
+tr.tica-top25-sh td a,
+tr.tica-top25-lh td,
+tr.tica-top25-lh td a {
   color: #333 !important;
 }
 
@@ -70,6 +81,39 @@ tr.tica-top25 td {
   border-bottom: 1px solid #e6c200;
 }
 
-tr.tica-top25-coat td {
-  border-bottom: 1px solid #e6dfc0;
+tr.tica-top25-sh td {
+  border-bottom: 1px solid #b2ebf2;
+}
+
+tr.tica-top25-lh td {
+  border-bottom: 1px solid #f8bbd9;
+}
+
+/* Breed code coloring for championship cats */
+.tica-breed-sh {
+  color: #1565c0 !important;
+  font-weight: bold;
+}
+
+.tica-breed-lh {
+  color: #c2185b !important;
+  font-weight: bold;
+}
+
+/* SH/LH ranking column styling */
+.tica-rank-sh {
+  color: #1565c0;
+  font-weight: bold;
+  text-align: center;
+}
+
+.tica-rank-lh {
+  color: #c2185b;
+  font-weight: bold;
+  text-align: center;
+}
+
+th.tica-rank-header {
+  font-size: 0.9em;
+  white-space: nowrap;
 }

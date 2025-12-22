@@ -98,6 +98,12 @@
     return /est_cat\d*\.htm$/i.test(path);
   }
 
+  // Check if current page is the FIRST championship cat page (where SH/LH rankings are accurate)
+  function isFirstChampionshipCatPage() {
+    const path = window.location.pathname;
+    return /est_cat1\.htm$/i.test(path);
+  }
+
   // Check if a row is a section header (has colspan and contains section name)
   function isSectionHeader(row) {
     const firstCell = row.querySelector('th, td');
@@ -183,6 +189,10 @@
 
     const tables = document.querySelectorAll('table');
     const isChampionshipPage = isChampionshipCatPage();
+    const isFirstCatPage = isFirstChampionshipCatPage();
+    // For dedicated championship pages (est_cat*.htm), only track coat ranks on first page
+    // For regional pages (detected via section headers), tracking resets per section so it's always accurate
+    const canTrackCoatRanks = !isChampionshipPage || isFirstCatPage;
 
     for (const table of tables) {
       const allRows = Array.from(table.querySelectorAll('tr'));
@@ -218,27 +228,41 @@
 
         const breedCode = getBreedCode(row, breedColIndex);
 
+        // Color breed code for championship cats
+        if (isChampionship && breedCode && breedColIndex >= 0) {
+          const cells = row.querySelectorAll('td');
+          if (breedColIndex < cells.length) {
+            const breedCell = cells[breedColIndex];
+            if (isShorthair(breedCode)) {
+              breedCell.classList.add('tica-breed-sh');
+            } else if (isLonghair(breedCode)) {
+              breedCell.classList.add('tica-breed-lh');
+            }
+          }
+        }
+
         if (rank <= 25) {
           // Top 25 all-breed - gold highlight
           row.classList.add('tica-top25');
 
-          // Track breed counts for championship cats
-          if (isChampionship && breedCode) {
+          // Track breed counts for championship cats (only when coat ranks are accurate)
+          if (isChampionship && canTrackCoatRanks && breedCode) {
             if (isShorthair(breedCode)) shorthairCount++;
             if (isLonghair(breedCode)) longhairCount++;
           }
-        } else if (isChampionship) {
+        } else if (isChampionship && canTrackCoatRanks) {
           // For championship cats ranked 26+, check if they make top 25 for their coat length
+          // Only apply on first championship page or regional pages where counts are accurate
           if (breedCode) {
             if (isShorthair(breedCode)) {
               shorthairCount++;
               if (shorthairCount <= 25) {
-                row.classList.add('tica-top25-coat');
+                row.classList.add('tica-top25-sh');
               }
             } else if (isLonghair(breedCode)) {
               longhairCount++;
               if (longhairCount <= 25) {
-                row.classList.add('tica-top25-coat');
+                row.classList.add('tica-top25-lh');
               }
             }
           }
@@ -247,10 +271,148 @@
     }
   }
 
+  // Add computed SH/LH ranking columns to championship cat pages
+  function addCoatRankColumns() {
+    // Only run on the FIRST championship cat page (est_cat1.htm)
+    // Other pages (est_cat2.htm, etc.) would have incorrect rankings starting from 1
+    const path = window.location.pathname;
+    if (!/est_cat1\.htm$/i.test(path)) return;
+
+    const tables = document.querySelectorAll('table');
+
+    for (const table of tables) {
+      const allRows = Array.from(table.querySelectorAll('tr'));
+      if (allRows.length === 0) continue;
+
+      const breedColIndex = findBreedColumnIndex(table);
+      if (breedColIndex < 0) continue;
+
+      // Find the header row (the one with "Breed" in it)
+      let headerRowIndex = -1;
+      let insertAfterIndex = -1;  // Index to insert new columns after (first "Breed" column)
+
+      for (let i = 0; i < allRows.length; i++) {
+        const row = allRows[i];
+        const cells = row.querySelectorAll('th, td');
+        for (let j = 0; j < cells.length; j++) {
+          const text = cells[j].textContent.trim().toLowerCase();
+          if (text === 'breed') {
+            if (headerRowIndex === -1) {
+              headerRowIndex = i;
+              insertAfterIndex = j;  // First "Breed" column (the rank column)
+            }
+            break;  // Only need first occurrence per row
+          }
+        }
+        if (headerRowIndex !== -1) break;
+      }
+
+      if (headerRowIndex === -1) continue;
+
+      // Pass 1: Compute SH and LH ranks for all data rows
+      const rowRanks = new Map();
+      let shCount = 0;
+      let lhCount = 0;
+
+      for (let i = headerRowIndex + 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (!row.querySelector('td')) continue;
+
+        const rank = getRank(row);
+        if (rank === null) continue;
+
+        const breedCode = getBreedCode(row, breedColIndex);
+        if (!breedCode) continue;
+
+        let shRank = null;
+        let lhRank = null;
+
+        if (isShorthair(breedCode)) {
+          shCount++;
+          shRank = shCount;
+        } else if (isLonghair(breedCode)) {
+          lhCount++;
+          lhRank = lhCount;
+        }
+
+        rowRanks.set(row, { shRank, lhRank });
+      }
+
+      // Pass 2: Adjust colspan in title row (row before header)
+      // The title row has "Rank" spanning the ranking columns - increase by 2
+      if (headerRowIndex > 0) {
+        const titleRow = allRows[headerRowIndex - 1];
+        const titleCells = titleRow.querySelectorAll('th, td');
+        for (const cell of titleCells) {
+          const colspan = cell.getAttribute('colspan');
+          if (colspan && cell.textContent.trim().toLowerCase() === 'rank') {
+            cell.setAttribute('colspan', parseInt(colspan) + 2);
+            break;
+          }
+        }
+      }
+
+      // Pass 3: Insert columns into header row
+      const headerRow = allRows[headerRowIndex];
+      const headerCells = headerRow.querySelectorAll('th, td');
+      if (insertAfterIndex < headerCells.length) {
+        const referenceCell = headerCells[insertAfterIndex];
+
+        // Create SH header
+        const shHeader = document.createElement('th');
+        shHeader.textContent = 'SH';
+        shHeader.classList.add('tica-rank-header');
+        shHeader.title = 'Shorthair Ranking';
+
+        // Create LH header
+        const lhHeader = document.createElement('th');
+        lhHeader.textContent = 'LH';
+        lhHeader.classList.add('tica-rank-header');
+        lhHeader.title = 'Longhair Ranking';
+
+        // Insert after the first "Breed" column
+        referenceCell.after(lhHeader);
+        referenceCell.after(shHeader);
+      }
+
+      // Pass 3: Insert rank cells into data rows
+      for (let i = headerRowIndex + 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) continue;
+
+        // Find the cell at insertAfterIndex
+        if (insertAfterIndex >= cells.length) continue;
+        const referenceCell = cells[insertAfterIndex];
+
+        const ranks = rowRanks.get(row) || { shRank: null, lhRank: null };
+
+        // Create SH rank cell
+        const shCell = document.createElement('td');
+        if (ranks.shRank !== null) {
+          shCell.textContent = ranks.shRank;
+          shCell.classList.add('tica-rank-sh');
+        }
+
+        // Create LH rank cell
+        const lhCell = document.createElement('td');
+        if (ranks.lhRank !== null) {
+          lhCell.textContent = ranks.lhRank;
+          lhCell.classList.add('tica-rank-lh');
+        }
+
+        // Insert after the first "Breed" column (same position as header)
+        referenceCell.after(lhCell);
+        referenceCell.after(shCell);
+      }
+    }
+  }
+
   // Initialize the extension
   function init() {
     createSeasonDropdown();
     highlightTop25();
+    addCoatRankColumns();
   }
 
   // Run when DOM is ready
