@@ -4,6 +4,11 @@
   "description": "Chrome extension that adds season navigation and top 25 highlighting to TICA Estimated Standings pages",
   "private": true,
   "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "package": "./scripts/package.sh",
     "upload": "chrome-webstore-upload upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
     "publish": "chrome-webstore-upload publish",
@@ -11,7 +16,11 @@
     "setup:keys": "./scripts/setup-credentials.sh"
   },
   "devDependencies": {
-    "chrome-webstore-upload-cli": "^3.3.1"
+    "@eslint/js": "^9.39.2",
+    "chrome-webstore-upload-cli": "^3.3.1",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "jest": "^30.2.0"
   },
   "webExt": {
     "sourceDir": "dist"

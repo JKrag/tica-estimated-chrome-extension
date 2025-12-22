@@ -93,3 +93,13 @@ function isLonghair(breedCode) {
 function isShorthair(breedCode) {
   return SHORTHAIR_BREEDS.has(breedCode.toUpperCase());
 }
+
+// Export for testing (Node.js environment)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    LONGHAIR_BREEDS,
+    SHORTHAIR_BREEDS,
+    isLonghair,
+    isShorthair
+  };
+}
