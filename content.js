@@ -408,8 +408,242 @@
     }
   }
 
+  // ============================================================
+  // NEW SITE (estand-page.html) SUPPORT
+  // ============================================================
+
+  // Get current compclass from the rendered standTitle text (most reliable post-render)
+  function getCompclass() {
+    const titleEl = document.querySelector('[id="standTitle"]');
+    if (titleEl) {
+      const text = titleEl.textContent.toLowerCase();
+      if (text.includes('kitten') && text.includes('household')) return 'HHK';
+      if (text.includes('household')) return 'HHP';
+      if (text.includes('kitten')) return 'KIT';
+      if (text.includes('alter')) return 'ALT';
+      if (text.includes('cat')) return 'CAT';
+    }
+    // Fallback: checked radio button, then component property, then URL
+    for (const tab of ['KIT', 'CAT', 'ALT', 'HHK', 'HHP']) {
+      const btn = document.querySelector(`#btn-${tab}`);
+      if (btn && btn.checked) return tab;
+    }
+    const el = document.querySelector('estand-page');
+    if (el && el.compclass) return el.compclass;
+    return new URLSearchParams(location.search).get('compclass') || 'KIT';
+  }
+
+  // Highlight top 25 on new site and add breed code coloring
+  function highlightNewSiteTop25(table, compclass, regionFiltered) {
+    const allRows = Array.from(table.querySelectorAll('tr'));
+    const isCAT = compclass === 'CAT';
+
+    let shCount = 0;
+    let lhCount = 0;
+
+    for (const row of allRows) {
+      const irankCell = row.querySelector('td[id="irank"]');
+      if (!irankCell) continue;
+
+      const irank = parseInt(irankCell.textContent.trim(), 10);
+      if (isNaN(irank)) continue;
+
+      // When region-filtered, use rrank as the primary ranking threshold
+      const rrankCell = row.querySelector('td[id="rrank"]');
+      const rrank = rrankCell ? parseInt(rrankCell.textContent.trim(), 10) : NaN;
+      const primaryRank = (regionFiltered && !isNaN(rrank)) ? rrank : irank;
+
+      const breedCell = row.querySelector('td[id="breed"]');
+      const breedCode = breedCell ? breedCell.textContent.trim().toUpperCase() : null;
+
+      // Color breed code for CAT tab
+      if (isCAT && breedCell && breedCode) {
+        if (isShorthair(breedCode)) {
+          breedCell.classList.add('tica-new-breed-sh');
+        } else if (isLonghair(breedCode)) {
+          breedCell.classList.add('tica-new-breed-lh');
+        }
+      }
+
+      // IW badge: when region-filtered, mark irank cell gold if cat is in IW top 25
+      if (regionFiltered && irank <= 25) {
+        irankCell.classList.add('tica-new-iw-badge');
+      }
+
+      if (primaryRank <= 25) {
+        row.classList.add('tica-new-top25');
+        if (isCAT && breedCode) {
+          if (isShorthair(breedCode)) shCount++;
+          else if (isLonghair(breedCode)) lhCount++;
+        }
+      } else if (isCAT && breedCode) {
+        if (isShorthair(breedCode)) {
+          shCount++;
+          if (shCount <= 25) row.classList.add('tica-new-top25-sh');
+        } else if (isLonghair(breedCode)) {
+          lhCount++;
+          if (lhCount <= 25) row.classList.add('tica-new-top25-lh');
+        }
+      }
+    }
+  }
+
+  // Add SH/LH rank columns to new site CAT table
+  function addNewSiteCoatRankColumns(table) {
+    const allRows = Array.from(table.querySelectorAll('tr'));
+    if (allRows.length < 2) return;
+
+    // Pass 1: compute SH/LH ranks for data rows
+    const rowRanks = new Map();
+    let shCount = 0;
+    let lhCount = 0;
+
+    for (const row of allRows) {
+      const irankCell = row.querySelector('td[id="irank"]');
+      if (!irankCell) continue;
+      const rank = parseInt(irankCell.textContent.trim(), 10);
+      if (isNaN(rank)) continue;
+
+      const breedCell = row.querySelector('td[id="breed"]');
+      const breedCode = breedCell ? breedCell.textContent.trim().toUpperCase() : null;
+      if (!breedCode) { rowRanks.set(row, { shRank: null, lhRank: null }); continue; }
+
+      let shRank = null, lhRank = null;
+      if (isShorthair(breedCode)) { shCount++; shRank = shCount; }
+      else if (isLonghair(breedCode)) { lhCount++; lhRank = lhCount; }
+      rowRanks.set(row, { shRank, lhRank });
+    }
+
+    // Pass 2: adjust title row colspan (row 0) — store original for cleanup
+    const titleRow = allRows[0];
+    if (titleRow) {
+      const firstCell = titleRow.querySelector('td, th');
+      if (firstCell) {
+        const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+        firstCell.dataset.ticaOrigColspan = colspan;
+        firstCell.setAttribute('colspan', colspan + 2);
+      }
+    }
+
+    // Pass 3: insert headers into header row (row 1), after "Breed rank" cell (index 2)
+    const headerRow = allRows[1];
+    if (headerRow) {
+      const headerCells = headerRow.querySelectorAll('td, th');
+      if (headerCells.length > 2) {
+        const refCell = headerCells[2]; // "Breed rank" column
+        const shHeader = document.createElement('th');
+        shHeader.textContent = 'SH';
+        shHeader.className = 'tica-new-rank-header';
+        shHeader.title = 'Shorthair Ranking';
+        const lhHeader = document.createElement('th');
+        lhHeader.textContent = 'LH';
+        lhHeader.className = 'tica-new-rank-header';
+        lhHeader.title = 'Longhair Ranking';
+        refCell.after(lhHeader);
+        refCell.after(shHeader);
+      }
+    }
+
+    // Pass 4: insert rank cells into data rows
+    for (const row of allRows) {
+      const irankCell = row.querySelector('td[id="irank"]');
+      if (!irankCell) continue;
+
+      const tds = row.querySelectorAll('td');
+      if (tds.length <= 2) continue;
+      const refCell = tds[2]; // "Breed rank" column
+
+      const ranks = rowRanks.get(row) || { shRank: null, lhRank: null };
+
+      const shCell = document.createElement('td');
+      shCell.className = 'tica-new-rank-sh';
+      if (ranks.shRank !== null) shCell.textContent = ranks.shRank;
+
+      const lhCell = document.createElement('td');
+      lhCell.className = 'tica-new-rank-lh';
+      if (ranks.lhRank !== null) lhCell.textContent = ranks.lhRank;
+
+      refCell.after(lhCell);
+      refCell.after(shCell);
+    }
+  }
+
+  // Remove all previously applied enhancements from the table
+  function cleanupNewSite(table) {
+    // Remove row highlight classes
+    table.querySelectorAll('tr').forEach(r => {
+      r.classList.remove('tica-new-top25', 'tica-new-top25-sh', 'tica-new-top25-lh');
+    });
+    // Remove breed code and IW badge classes
+    table.querySelectorAll('.tica-new-breed-sh, .tica-new-breed-lh, .tica-new-iw-badge').forEach(el => {
+      el.classList.remove('tica-new-breed-sh', 'tica-new-breed-lh', 'tica-new-iw-badge');
+    });
+    // Remove injected SH/LH rank cells and headers
+    table.querySelectorAll('.tica-new-rank-sh, .tica-new-rank-lh, .tica-new-rank-header').forEach(el => el.remove());
+    // Restore title row colspan if we changed it
+    const firstCell = table.querySelector('tr:first-child td, tr:first-child th');
+    if (firstCell && firstCell.dataset.ticaOrigColspan) {
+      firstCell.setAttribute('colspan', firstCell.dataset.ticaOrigColspan);
+      delete firstCell.dataset.ticaOrigColspan;
+    }
+  }
+
+  // Enhance the new site table (called on each re-render)
+  function enhanceNewSite() {
+    const table = document.querySelector('table');
+    if (!table) return;
+
+    // Use standTitle text as the sentinel — if it matches what we last processed, skip
+    const titleEl = document.querySelector('[id="standTitle"]');
+    const currentTitle = titleEl ? titleEl.textContent.trim() : '';
+    if (!currentTitle) return; // Table not fully rendered yet
+
+    const regionFiltered = !!new URLSearchParams(location.search).get('region');
+    const sentinel = currentTitle + (regionFiltered ? '|region:' + new URLSearchParams(location.search).get('region') : '');
+    if (table.dataset.ticaEnhanced === sentinel) return;
+
+    // Clean up any stale enhancement from a previous render/tab
+    cleanupNewSite(table);
+    table.dataset.ticaEnhanced = sentinel;
+
+    const compclass = getCompclass();
+    highlightNewSiteTop25(table, compclass, regionFiltered);
+    if (compclass === 'CAT') {
+      addNewSiteCoatRankColumns(table);
+    }
+  }
+
+  // Initialize for the new TICA estimated standings site
+  function initNewSite() {
+    let isEnhancing = false;
+
+    function debounce(fn, delay) {
+      let timer;
+      return function() {
+        clearTimeout(timer);
+        timer = setTimeout(fn, delay);
+      };
+    }
+
+    enhanceNewSite();
+
+    const target = document.querySelector('estand-page') || document.body;
+    const observer = new MutationObserver(debounce(function() {
+      if (isEnhancing) return;
+      isEnhancing = true;
+      enhanceNewSite();
+      isEnhancing = false;
+    }, 100));
+
+    observer.observe(target, { childList: true, subtree: true });
+  }
+
   // Initialize the extension
   function init() {
+    if (window.location.pathname.includes('estand-page.html')) {
+      initNewSite();
+      return;
+    }
     createSeasonDropdown();
     highlightTop25();
     addCoatRankColumns();

@@ -259,3 +259,99 @@ table tr td {
 table tr:not(.tica-top25):not(.tica-top25-sh):not(.tica-top25-lh):nth-child(even) td {
   background-color: rgba(0, 0, 0, 0.015);
 }
+
+/* ============================================
+   New Site (estand-page.html) — Bootstrap 5 Blue Theme
+   ============================================ */
+
+/* Top 25 all-breed — warm ivory */
+tr.tica-new-top25 td {
+  background-color: #fef9e7 !important;
+}
+tr.tica-new-top25:hover td {
+  background-color: #fdf0c0 !important;
+}
+
+/* Top 25 SH runner-up — light sky blue */
+tr.tica-new-top25-sh td {
+  background-color: #e8f4f8 !important;
+}
+tr.tica-new-top25-sh:hover td {
+  background-color: #cde9f5 !important;
+}
+
+/* Top 25 LH runner-up — light lavender */
+tr.tica-new-top25-lh td {
+  background-color: #fdf4ff !important;
+}
+tr.tica-new-top25-lh:hover td {
+  background-color: #f3e5f5 !important;
+}
+
+/* Text readability on new-site highlighted rows */
+tr.tica-new-top25 td,
+tr.tica-new-top25 td a,
+tr.tica-new-top25-sh td,
+tr.tica-new-top25-sh td a,
+tr.tica-new-top25-lh td,
+tr.tica-new-top25-lh td a {
+  color: #2d2d2d !important;
+}
+
+/* Breed code coloring — new site */
+td.tica-new-breed-sh {
+  color: #0277bd !important;
+  font-weight: 700;
+  background-color: #e1f5fe !important;
+  border-radius: 3px;
+}
+
+td.tica-new-breed-lh {
+  color: #6a1b9a !important;
+  font-weight: 700;
+  background-color: #f3e5f5 !important;
+  border-radius: 3px;
+}
+
+/* SH/LH rank columns — new site */
+td.tica-new-rank-sh {
+  color: #0277bd;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+td.tica-new-rank-lh {
+  color: #6a1b9a;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+th.tica-new-rank-header {
+  font-size: 0.85em;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 6px !important;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+th.tica-new-rank-header[title="Shorthair Ranking"] {
+  color: #0277bd;
+}
+
+th.tica-new-rank-header[title="Longhair Ranking"] {
+  color: #6a1b9a;
+}
+
+/* IW badge — gold cell on irank when region-filtered and cat qualifies internationally */
+/* Must match or beat tr.tica-new-top25 td specificity (0,1,2) so use tr + td selector */
+tr td.tica-new-iw-badge {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  font-weight: 700;
+  border-radius: 3px;
+  text-align: center;
+}

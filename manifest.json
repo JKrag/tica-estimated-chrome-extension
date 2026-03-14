@@ -5,7 +5,10 @@
   "description": "Adds season navigation dropdown and top 25 highlighting to TICA Estimated Standings pages",
   "content_scripts": [
     {
-      "matches": ["*://ticamembers.org/estimated_standings/*"],
+      "matches": [
+        "*://ticamembers.org/estimated_standings/*",
+        "*://ticamembers.org/estand-page.html*"
+      ],
       "js": ["breeds.js", "content.js"],
       "css": ["styles.css"],
       "run_at": "document_end"
