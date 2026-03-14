@@ -1,119 +1,261 @@
 /* TICA Estimated Standings Enhancer Styles */
+/* Visual polish update - harmonized with site's tan/gold color scheme */
 
-/* Season navigation dropdown */
+/* ============================================
+   CSS Custom Properties (Design Tokens)
+   ============================================ */
+:root {
+  /* Primary brand colors - derived from site's color scheme */
+  --tica-gold-light: #fff8e1;
+  --tica-gold: #ffc107;
+  --tica-gold-dark: #ff9800;
+  --tica-tan: #f5f0e6;
+  --tica-tan-dark: #e8dcc8;
+
+  /* Highlight colors - warm-tinted for harmony */
+  --highlight-gold: #fff3cd;
+  --highlight-gold-border: #ffe082;
+  --highlight-sh: #e3f2fd;
+  --highlight-sh-border: #90caf9;
+  --highlight-lh: #fce4ec;
+  --highlight-lh-border: #f48fb1;
+
+  /* Breed code colors - refined and accessible */
+  --breed-sh-color: #1565c0;
+  --breed-sh-bg: rgba(21, 101, 192, 0.08);
+  --breed-lh-color: #ad1457;
+  --breed-lh-bg: rgba(173, 20, 87, 0.08);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+}
+
+/* ============================================
+   Season Navigation Dropdown
+   ============================================ */
 .tica-enhancer-dropdown {
-  background-color: #f5f5f5;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px 15px;
-  margin: 10px auto;
-  max-width: 400px;
+  background: linear-gradient(to bottom, #fdfbf7, #f5f0e6);
+  border: 1px solid var(--tica-tan-dark);
+  border-radius: 8px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin: var(--spacing-lg) auto;
+  max-width: 420px;
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-family);
   font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .tica-enhancer-dropdown label {
-  font-weight: bold;
-  color: #333;
-  margin-right: 8px;
+  font-weight: 600;
+  color: #5d4e37;
+  margin-right: var(--spacing-sm);
+  letter-spacing: 0.01em;
 }
 
 .tica-enhancer-dropdown select {
-  padding: 6px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-right: 32px;
   font-size: 14px;
-  border: 1px solid #999;
-  border-radius: 4px;
-  background-color: white;
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: #3d3427;
+  border: 1px solid var(--tica-tan-dark);
+  border-radius: 6px;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235d4e37' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   cursor: pointer;
-  min-width: 150px;
+  min-width: 160px;
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              background-color var(--transition-fast);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .tica-enhancer-dropdown select:hover {
-  border-color: #666;
+  border-color: #c9b896;
+  background-color: #fffdf9;
 }
 
 .tica-enhancer-dropdown select:focus {
   outline: none;
-  border-color: #0066cc;
-  box-shadow: 0 0 3px rgba(0, 102, 204, 0.3);
+  border-color: #b8860b;
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.15);
+  background-color: #ffffff;
 }
 
-/* Top 25 all-breed highlighting - Gold */
+.tica-enhancer-dropdown select:active {
+  background-color: #fdfbf7;
+}
+
+/* ============================================
+   Top 25 All-Breed Highlighting - Warm Gold
+   ============================================ */
 tr.tica-top25 {
-  background-color: #ffd700 !important;
+  background-color: var(--highlight-gold) !important;
 }
 
 tr.tica-top25 td {
-  background-color: #ffd700 !important;
+  background-color: var(--highlight-gold) !important;
+  border-bottom: 1px solid var(--highlight-gold-border) !important;
+  transition: background-color var(--transition-fast);
 }
 
-/* Top 25 shorthair runner-up highlighting - Light Teal */
+tr.tica-top25:hover td {
+  background-color: #ffecb3 !important;
+}
+
+/* ============================================
+   Top 25 Shorthair Runner-up - Cool Blue Tint
+   ============================================ */
 tr.tica-top25-sh {
-  background-color: #e0f7fa !important;
+  background-color: var(--highlight-sh) !important;
 }
 
 tr.tica-top25-sh td {
-  background-color: #e0f7fa !important;
+  background-color: var(--highlight-sh) !important;
+  border-bottom: 1px solid var(--highlight-sh-border) !important;
+  transition: background-color var(--transition-fast);
 }
 
-/* Top 25 longhair runner-up highlighting - Light Pink */
+tr.tica-top25-sh:hover td {
+  background-color: #bbdefb !important;
+}
+
+/* ============================================
+   Top 25 Longhair Runner-up - Warm Pink Tint
+   ============================================ */
 tr.tica-top25-lh {
-  background-color: #fce4ec !important;
+  background-color: var(--highlight-lh) !important;
 }
 
 tr.tica-top25-lh td {
-  background-color: #fce4ec !important;
+  background-color: var(--highlight-lh) !important;
+  border-bottom: 1px solid var(--highlight-lh-border) !important;
+  transition: background-color var(--transition-fast);
 }
 
-/* Ensure text remains readable on highlighted rows */
+tr.tica-top25-lh:hover td {
+  background-color: #f8bbd0 !important;
+}
+
+/* ============================================
+   Text Readability on Highlighted Rows
+   ============================================ */
 tr.tica-top25 td,
 tr.tica-top25 td a,
 tr.tica-top25-sh td,
 tr.tica-top25-sh td a,
 tr.tica-top25-lh td,
 tr.tica-top25-lh td a {
-  color: #333 !important;
+  color: #2d2d2d !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Add subtle border to distinguish highlighted rows */
-tr.tica-top25 td {
-  border-bottom: 1px solid #e6c200;
+tr.tica-top25 td a:hover,
+tr.tica-top25-sh td a:hover,
+tr.tica-top25-lh td a:hover {
+  text-decoration: underline;
 }
 
-tr.tica-top25-sh td {
-  border-bottom: 1px solid #b2ebf2;
-}
-
-tr.tica-top25-lh td {
-  border-bottom: 1px solid #f8bbd9;
-}
-
-/* Breed code coloring for championship cats */
+/* ============================================
+   Breed Code Coloring - Championship Cats
+   ============================================ */
 .tica-breed-sh {
-  color: #1565c0 !important;
-  font-weight: bold;
+  color: var(--breed-sh-color) !important;
+  font-weight: 700;
+  font-size: 0.95em;
+  letter-spacing: 0.02em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background-color: var(--breed-sh-bg);
+  transition: background-color var(--transition-fast);
+}
+
+.tica-breed-sh:hover {
+  background-color: rgba(21, 101, 192, 0.15);
 }
 
 .tica-breed-lh {
-  color: #c2185b !important;
-  font-weight: bold;
+  color: var(--breed-lh-color) !important;
+  font-weight: 700;
+  font-size: 0.95em;
+  letter-spacing: 0.02em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background-color: var(--breed-lh-bg);
+  transition: background-color var(--transition-fast);
 }
 
-/* SH/LH ranking column styling */
+.tica-breed-lh:hover {
+  background-color: rgba(173, 20, 87, 0.15);
+}
+
+/* ============================================
+   SH/LH Ranking Column Styling
+   ============================================ */
 .tica-rank-sh {
-  color: #1565c0;
-  font-weight: bold;
+  color: var(--breed-sh-color);
+  font-weight: 700;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .tica-rank-lh {
-  color: #c2185b;
-  font-weight: bold;
+  color: var(--breed-lh-color);
+  font-weight: 700;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 th.tica-rank-header {
-  font-size: 0.9em;
+  font-size: 0.85em;
+  font-weight: 700;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 6px !important;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+th.tica-rank-header[title="Shorthair Ranking"] {
+  color: var(--breed-sh-color);
+}
+
+th.tica-rank-header[title="Longhair Ranking"] {
+  color: var(--breed-lh-color);
+}
+
+/* ============================================
+   General Table Enhancements
+   ============================================ */
+/* Smooth row transitions */
+table tr td {
+  transition: background-color var(--transition-fast);
+}
+
+/* Subtle zebra striping enhancement for non-highlighted rows */
+table tr:not(.tica-top25):not(.tica-top25-sh):not(.tica-top25-lh):nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.015);
 }
