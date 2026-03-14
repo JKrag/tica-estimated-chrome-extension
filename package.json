@@ -10,9 +10,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "package": "./scripts/package.sh",
-    "upload": "chrome-webstore-upload upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
-    "publish": "chrome-webstore-upload publish",
-    "release": "npm run package && chrome-webstore-upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
+    "upload": "set -a && . ./.env && set +a && chrome-webstore-upload upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
+    "publish": "set -a && . ./.env && set +a && chrome-webstore-upload publish",
+    "release": "npm run package && set -a && . ./.env && set +a && chrome-webstore-upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
     "setup:keys": "./scripts/setup-credentials.sh"
   },
   "devDependencies": {
