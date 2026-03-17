@@ -184,14 +184,6 @@ tr.tica-top25-lh td a:hover {
   font-weight: 700;
   font-size: 0.95em;
   letter-spacing: 0.02em;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background-color: var(--breed-sh-bg);
-  transition: background-color var(--transition-fast);
-}
-
-.tica-breed-sh:hover {
-  background-color: rgba(21, 101, 192, 0.15);
 }
 
 .tica-breed-lh {
@@ -199,14 +191,6 @@ tr.tica-top25-lh td a:hover {
   font-weight: 700;
   font-size: 0.95em;
   letter-spacing: 0.02em;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background-color: var(--breed-lh-bg);
-  transition: background-color var(--transition-fast);
-}
-
-.tica-breed-lh:hover {
-  background-color: rgba(173, 20, 87, 0.15);
 }
 
 /* ============================================
@@ -298,31 +282,17 @@ tr.tica-new-top25-lh td a {
   color: #2d2d2d !important;
 }
 
-/* Breed code coloring — new site */
-td.tica-new-breed-sh {
-  color: #0277bd !important;
-  font-weight: 700;
-  background-color: #e1f5fe !important;
-  border-radius: 3px;
-}
-
-td.tica-new-breed-lh {
-  color: #6a1b9a !important;
-  font-weight: 700;
-  background-color: #f3e5f5 !important;
-  border-radius: 3px;
-}
-
 /* SH/LH rank columns — new site */
-td.tica-new-rank-sh {
-  color: #0277bd;
+/* Use tr + td selector (0,1,2) to beat the readability rule that forces color: #2d2d2d */
+tr td.tica-new-rank-sh {
+  color: #0277bd !important;
   font-weight: 700;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-td.tica-new-rank-lh {
-  color: #6a1b9a;
+tr td.tica-new-rank-lh {
+  color: #6a1b9a !important;
   font-weight: 700;
   text-align: center;
   font-variant-numeric: tabular-nums;

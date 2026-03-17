@@ -456,15 +456,6 @@
       const breedCell = row.querySelector('td[id="breed"]');
       const breedCode = breedCell ? breedCell.textContent.trim().toUpperCase() : null;
 
-      // Color breed code for CAT tab
-      if (isCAT && breedCell && breedCode) {
-        if (isShorthair(breedCode)) {
-          breedCell.classList.add('tica-new-breed-sh');
-        } else if (isLonghair(breedCode)) {
-          breedCell.classList.add('tica-new-breed-lh');
-        }
-      }
-
       // IW badge: when region-filtered, mark irank cell gold if cat is in IW top 25
       if (regionFiltered && irank <= 25) {
         irankCell.classList.add('tica-new-iw-badge');
@@ -574,9 +565,9 @@
     table.querySelectorAll('tr').forEach(r => {
       r.classList.remove('tica-new-top25', 'tica-new-top25-sh', 'tica-new-top25-lh');
     });
-    // Remove breed code and IW badge classes
-    table.querySelectorAll('.tica-new-breed-sh, .tica-new-breed-lh, .tica-new-iw-badge').forEach(el => {
-      el.classList.remove('tica-new-breed-sh', 'tica-new-breed-lh', 'tica-new-iw-badge');
+    // Remove IW badge class
+    table.querySelectorAll('.tica-new-iw-badge').forEach(el => {
+      el.classList.remove('tica-new-iw-badge');
     });
     // Remove injected SH/LH rank cells and headers
     table.querySelectorAll('.tica-new-rank-sh, .tica-new-rank-lh, .tica-new-rank-header').forEach(el => el.remove());
@@ -598,8 +589,9 @@
     const currentTitle = titleEl ? titleEl.textContent.trim() : '';
     if (!currentTitle) return; // Table not fully rendered yet
 
-    const regionFiltered = !!new URLSearchParams(location.search).get('region');
-    const sentinel = currentTitle + (regionFiltered ? '|region:' + new URLSearchParams(location.search).get('region') : '');
+    const region = new URLSearchParams(location.search).get('region');
+    const regionFiltered = !!region;
+    const sentinel = currentTitle + (region ? '|region:' + region : '');
     if (table.dataset.ticaEnhanced === sentinel) return;
 
     // Clean up any stale enhancement from a previous render/tab
@@ -615,8 +607,6 @@
 
   // Initialize for the new TICA estimated standings site
   function initNewSite() {
-    let isEnhancing = false;
-
     function debounce(fn, delay) {
       let timer;
       return function() {
@@ -628,13 +618,7 @@
     enhanceNewSite();
 
     const target = document.querySelector('estand-page') || document.body;
-    const observer = new MutationObserver(debounce(function() {
-      if (isEnhancing) return;
-      isEnhancing = true;
-      enhanceNewSite();
-      isEnhancing = false;
-    }, 100));
-
+    const observer = new MutationObserver(debounce(enhanceNewSite, 100));
     observer.observe(target, { childList: true, subtree: true });
   }
 
