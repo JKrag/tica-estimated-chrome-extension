@@ -1,6 +1,6 @@
 {
   "name": "tica-estimated-standings-enhancer",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Chrome extension that adds season navigation and top 25 highlighting to TICA Estimated Standings pages",
   "private": true,
   "scripts": {
@@ -12,8 +12,7 @@
     "package": "./scripts/package.sh",
     "upload": "set -a && . ./.env && set +a && chrome-webstore-upload upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
     "publish": "set -a && . ./.env && set +a && chrome-webstore-upload publish",
-    "release": "npm run package && set -a && . ./.env && set +a && chrome-webstore-upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip",
-    "setup:keys": "./scripts/setup-credentials.sh"
+    "release": "npm run package && set -a && . ./.env && set +a && chrome-webstore-upload --source dist/tica-estimated-standings-enhancer-v$npm_package_version.zip"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

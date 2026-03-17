@@ -2,7 +2,9 @@ const {
   LONGHAIR_BREEDS,
   SHORTHAIR_BREEDS,
   isLonghair,
-  isShorthair
+  isShorthair,
+  BREED_NAMES,
+  getBreedName
 } = require('../breeds.js');
 
 describe('Breed Data Integrity', () => {
@@ -80,6 +82,33 @@ describe('isShorthair()', () => {
     expect(isShorthair('Bg')).toBe(true);
     expect(isShorthair('si')).toBe(true);  // Siamese
     expect(isShorthair('SI')).toBe(true);
+  });
+});
+
+describe('BREED_NAMES / getBreedName', () => {
+  test('every longhair breed code has an entry in BREED_NAMES', () => {
+    LONGHAIR_BREEDS.forEach(code => {
+      expect(BREED_NAMES).toHaveProperty(code);
+    });
+  });
+
+  test('every shorthair breed code has an entry in BREED_NAMES', () => {
+    SHORTHAIR_BREEDS.forEach(code => {
+      expect(BREED_NAMES).toHaveProperty(code);
+    });
+  });
+
+  test('getBreedName returns correct name for known code', () => {
+    expect(getBreedName('OL')).toBe('Oriental Longhair');
+  });
+
+  test('getBreedName is case insensitive', () => {
+    expect(getBreedName('ol')).toBe('Oriental Longhair');
+    expect(getBreedName('Ol')).toBe('Oriental Longhair');
+  });
+
+  test('getBreedName returns null for unknown code', () => {
+    expect(getBreedName('XX')).toBeNull();
   });
 });
 

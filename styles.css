@@ -184,6 +184,7 @@ tr.tica-top25-lh td a:hover {
   font-weight: 700;
   font-size: 0.95em;
   letter-spacing: 0.02em;
+  cursor: help;
 }
 
 .tica-breed-lh {
@@ -191,6 +192,11 @@ tr.tica-top25-lh td a:hover {
   font-weight: 700;
   font-size: 0.95em;
   letter-spacing: 0.02em;
+  cursor: help;
+}
+
+td[id="breed"] {
+  cursor: help;
 }
 
 /* ============================================

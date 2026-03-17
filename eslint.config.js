@@ -29,7 +29,9 @@ module.exports = [
         LONGHAIR_BREEDS: 'readonly',
         SHORTHAIR_BREEDS: 'readonly',
         isLonghair: 'readonly',
-        isShorthair: 'readonly'
+        isShorthair: 'readonly',
+        BREED_NAMES: 'readonly',
+        getBreedName: 'readonly'
       }
     }
   },

@@ -22,6 +22,23 @@
     { year: 2013, label: '2012-13' },
   ];
 
+  const REGION_NAMES = {
+    'AE': 'Arabian/Eastern Europe',
+    'EN': 'Europe North',
+    'EW': 'Europe West',
+    'GL': 'Great Lakes',
+    'HW': 'Hawaii',
+    'IN': 'International/At Large',
+    'MA': 'Mid-Atlantic',
+    'MP': 'Mid-Pacific',
+    'NE': 'New England',
+    'NW': 'Northwest',
+    'SA': 'South America',
+    'SC': 'South Central',
+    'SE': 'Southeast',
+    'SW': 'Southwest',
+  };
+
   // Parse the current URL to extract season and page
   function parseUrl() {
     const path = window.location.pathname;
@@ -128,38 +145,32 @@
     return sectionName === 'championship cats' || sectionName === 'cats';
   }
 
-  // Find the breed code column index by looking for the "Breed" header
-  // Note: There are often two "Breed" columns - one for breed rank and one for breed code
-  // We want the LAST one (the breed code column, typically index 5)
-  function findBreedColumnIndex(table) {
-    const rows = table.querySelectorAll('tr');
-
-    // Search through rows to find the header row with "Breed"
-    for (const row of rows) {
+  // Find a column index by header text. Pass findLast=true to get the last match
+  // in the row (needed for "Breed" which appears twice: rank column then code column).
+  function findColumnIndex(table, headerText, findLast) {
+    for (const row of table.querySelectorAll('tr')) {
       const cells = row.querySelectorAll('th, td');
-      let lastBreedIndex = -1;
-
+      let found = -1;
       for (let i = 0; i < cells.length; i++) {
-        if (cells[i].textContent.trim().toLowerCase() === 'breed') {
-          lastBreedIndex = i;  // Keep updating to get the LAST "Breed" column
+        if (cells[i].textContent.trim().toLowerCase() === headerText) {
+          if (!findLast) return i;
+          found = i;
         }
       }
-
-      if (lastBreedIndex !== -1) {
-        return lastBreedIndex;
-      }
+      if (found !== -1) return found;
     }
     return -1;
   }
 
-  // Get breed code from a table row using the known breed column index
-  function getBreedCode(row, breedColIndex) {
+  // Get breed code from a table row using the known breed column index.
+  // Pass pre-fetched cells to avoid a redundant querySelectorAll.
+  function getBreedCode(row, breedColIndex, cells) {
     if (breedColIndex < 0) return null;
 
-    const cells = row.querySelectorAll('td');
-    if (breedColIndex >= cells.length) return null;
+    const tds = cells || row.querySelectorAll('td');
+    if (breedColIndex >= tds.length) return null;
 
-    const cell = cells[breedColIndex];
+    const cell = tds[breedColIndex];
     const text = cell.textContent.trim().toUpperCase();
 
     // TICA breed codes are 2-3 uppercase letters
@@ -201,7 +212,8 @@
       if (allRows.length === 0) continue;
 
       // Find the breed column index once for this table
-      const breedColIndex = findBreedColumnIndex(table);
+      const breedColIndex = findColumnIndex(table, 'breed', true);
+      const regionColIndex = findColumnIndex(table, 'rgn');
 
       // Track current section state
       let currentSection = isChampionshipPage ? 'cats' : '';  // Default for dedicated cat pages
@@ -226,11 +238,11 @@
         const rank = getRank(row);
         if (rank === null) continue;
 
-        const breedCode = getBreedCode(row, breedColIndex);
+        const cells = row.querySelectorAll('td');
+        const breedCode = getBreedCode(row, breedColIndex, cells);
 
         // Color breed code for championship cats
         if (isChampionship && breedCode && breedColIndex >= 0) {
-          const cells = row.querySelectorAll('td');
           if (breedColIndex < cells.length) {
             const breedCell = cells[breedColIndex];
             if (isShorthair(breedCode)) {
@@ -239,6 +251,19 @@
               breedCell.classList.add('tica-breed-lh');
             }
           }
+        }
+
+        // Breed tooltip (all rows)
+        if (breedCode && breedColIndex >= 0 && breedColIndex < cells.length) {
+          const breedName = getBreedName(breedCode);
+          if (breedName) cells[breedColIndex].title = breedName;
+        }
+
+        // Region tooltip (all rows)
+        if (regionColIndex >= 0 && regionColIndex < cells.length) {
+          const regionCode = cells[regionColIndex].textContent.trim().toUpperCase();
+          const regionName = REGION_NAMES[regionCode];
+          if (regionName) cells[regionColIndex].title = regionName;
         }
 
         if (rank <= 25) {
@@ -284,7 +309,7 @@
       const allRows = Array.from(table.querySelectorAll('tr'));
       if (allRows.length === 0) continue;
 
-      const breedColIndex = findBreedColumnIndex(table);
+      const breedColIndex = findColumnIndex(table, 'breed', true);
       if (breedColIndex < 0) continue;
 
       // Find the header row (the one with "Breed" in it)
@@ -455,6 +480,19 @@
 
       const breedCell = row.querySelector('td[id="breed"]');
       const breedCode = breedCell ? breedCell.textContent.trim().toUpperCase() : null;
+
+      // Breed tooltip
+      if (breedCell && breedCode) {
+        const breedName = getBreedName(breedCode);
+        if (breedName) breedCell.title = breedName;
+      }
+
+      // Region tooltip
+      const regionCell = row.querySelector('td[id="region"]');
+      if (regionCell) {
+        const regionCode = regionCell.textContent.trim().toUpperCase();
+        if (REGION_NAMES[regionCode]) regionCell.title = REGION_NAMES[regionCode];
+      }
 
       // IW badge: when region-filtered, mark irank cell gold if cat is in IW top 25
       if (regionFiltered && irank <= 25) {

@@ -23,3 +23,6 @@ Thumbs.db
 # Debug files
 *.log
 Screenshot-*.png
+
+# Test coverage
+coverage
