@@ -30,7 +30,6 @@ module.exports = [
         SHORTHAIR_BREEDS: 'readonly',
         isLonghair: 'readonly',
         isShorthair: 'readonly',
-        BREED_NAMES: 'readonly',
         getBreedName: 'readonly'
       }
     }

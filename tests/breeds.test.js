@@ -1,9 +1,9 @@
 const {
+  BREEDS,
   LONGHAIR_BREEDS,
   SHORTHAIR_BREEDS,
   isLonghair,
   isShorthair,
-  BREED_NAMES,
   getBreedName
 } = require('../breeds.js');
 
@@ -85,16 +85,12 @@ describe('isShorthair()', () => {
   });
 });
 
-describe('BREED_NAMES / getBreedName', () => {
-  test('every longhair breed code has an entry in BREED_NAMES', () => {
-    LONGHAIR_BREEDS.forEach(code => {
-      expect(BREED_NAMES).toHaveProperty(code);
-    });
-  });
-
-  test('every shorthair breed code has an entry in BREED_NAMES', () => {
-    SHORTHAIR_BREEDS.forEach(code => {
-      expect(BREED_NAMES).toHaveProperty(code);
+describe('BREEDS / getBreedName', () => {
+  test('every breed has coat (LH or SH) and name', () => {
+    Object.values(BREEDS).forEach(data => {
+      expect(['LH', 'SH']).toContain(data.coat);
+      expect(typeof data.name).toBe('string');
+      expect(data.name.length).toBeGreaterThan(0);
     });
   });
 
