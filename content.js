@@ -671,65 +671,29 @@
     return isNaN(num) ? text.toLowerCase() : num;
   }
 
-  // Return a lowercase label for a table, checking caption, Bootstrap card-header,
-  // and preceding heading elements so we can identify "Details" vs "Reports" tables.
-  function getTableLabel(table) {
-    // 1. <caption> element inside the table
-    if (table.caption) return table.caption.textContent.trim().toLowerCase();
-
-    // 2. Bootstrap card structure: .card > .card-header + .card-body > table
-    const card = table.closest('.card');
-    if (card) {
-      const header = card.querySelector('.card-header, .card-title');
-      if (header) return header.textContent.trim().toLowerCase();
-    }
-
-    // 3. Traverse previous siblings (and up one parent level) for a heading
-    function precedingHeading(el) {
-      let prev = el.previousElementSibling;
-      while (prev) {
-        if (/^H[1-6]$/.test(prev.tagName)) return prev.textContent.trim().toLowerCase();
-        if (prev.tagName === 'TABLE') return ''; // hit another table — stop
-        prev = prev.previousElementSibling;
-      }
-      const parent = el.parentElement;
-      if (parent && parent !== document.body) return precedingHeading(parent);
-      return '';
-    }
-
-    return precedingHeading(table);
-  }
-
-  // Find the table labeled "Details" on the detail page.
-  // Falls back to the first table if no explicitly labeled one is found.
-  function findDetailsTable() {
-    const tables = Array.from(document.querySelectorAll('table'));
-    if (tables.length === 0) return null;
-    const labeled = tables.find(t => getTableLabel(t).includes('detail'));
-    return labeled || tables[0];
-  }
-
-  // Make the "Details" table on the detail page sortable by clicking its headers.
+  // Make the first (Details) table on the detail page sortable by clicking its headers.
+  // The Details table has no <thead>; its first usable header row is the first <tr>
+  // that contains <th> elements with non-empty text (earlier rows may have empty <th>s).
   function makeDetailTableSortable() {
-    const table = findDetailsTable();
+    const table = document.querySelector('table');
     if (!table || table.dataset.ticaSortable) return;
 
-    // Prefer <thead> row; fall back to first <tr> anywhere in the table
-    const headerRow = table.tHead
-      ? table.tHead.rows[0]
-      : table.querySelector('tr');
+    // Find the first <tr> whose <th> cells have actual text content
+    const allRows = Array.from(table.querySelectorAll('tr'));
+    const headerRow = allRows.find(row => {
+      const ths = row.querySelectorAll('th');
+      return ths.length > 0 && Array.from(ths).some(th => th.textContent.trim() !== '');
+    });
     if (!headerRow) return;
 
-    // Accept <th> elements; fall back to <td> when the table uses no <th>
-    let headers = Array.from(headerRow.querySelectorAll('th'));
-    if (headers.length === 0) headers = Array.from(headerRow.querySelectorAll('td'));
-    if (headers.length === 0) return;
+    const headers = Array.from(headerRow.querySelectorAll('th'));
+    const headerIndex = allRows.indexOf(headerRow);
 
-    // The body containing data rows
-    const dataBody = table.tBodies[0] || null;
-    const getDataRows = () => dataBody
-      ? Array.from(dataBody.rows)
-      : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
+    // Data rows are all <tr> elements after the header row that contain <td> cells
+    const getDataRows = () =>
+      Array.from(table.querySelectorAll('tr'))
+        .slice(headerIndex + 1)
+        .filter(r => r.querySelector('td'));
 
     if (getDataRows().length === 0) return;
 
@@ -752,7 +716,7 @@
         headers.forEach(h => h.classList.remove('tica-sort-asc', 'tica-sort-desc'));
         th.classList.add(sortAsc ? 'tica-sort-asc' : 'tica-sort-desc');
 
-        // Sort and re-insert rows
+        // Sort and re-insert rows in the same parent element
         const rows = getDataRows();
         rows.sort((a, b) => {
           const aVal = a.cells[colIndex] ? parseCellValue(a.cells[colIndex]) : '';
@@ -762,7 +726,7 @@
           return 0;
         });
 
-        const parent = dataBody || table;
+        const parent = headerRow.parentElement;
         rows.forEach(r => parent.appendChild(r));
       });
     });
