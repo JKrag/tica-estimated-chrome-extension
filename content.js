@@ -671,66 +671,99 @@
     return isNaN(num) ? text.toLowerCase() : num;
   }
 
-  // Make all tables on the detail page sortable by clicking their headers
-  function makeTablesSortable() {
-    const tables = document.querySelectorAll('table');
-    tables.forEach(table => {
-      if (table.dataset.ticaSortable) return; // already wired up
+  // Return a lowercase label for a table, checking caption, Bootstrap card-header,
+  // and preceding heading elements so we can identify "Details" vs "Reports" tables.
+  function getTableLabel(table) {
+    // 1. <caption> element inside the table
+    if (table.caption) return table.caption.textContent.trim().toLowerCase();
 
-      // Prefer a <thead> row; fall back to the first row in the table
-      const headerRow = table.tHead
-        ? table.tHead.rows[0]
-        : table.querySelector('tr');
-      if (!headerRow) return;
-      const headers = Array.from(headerRow.querySelectorAll('th'));
-      if (headers.length === 0) return;
+    // 2. Bootstrap card structure: .card > .card-header + .card-body > table
+    const card = table.closest('.card');
+    if (card) {
+      const header = card.querySelector('.card-header, .card-title');
+      if (header) return header.textContent.trim().toLowerCase();
+    }
 
-      // Determine the body element that contains the data rows
-      const dataBody = table.tBodies[0] || null;
-      const dataRows = dataBody
-        ? Array.from(dataBody.rows)
-        : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
-      if (dataRows.length === 0) return;
+    // 3. Traverse previous siblings (and up one parent level) for a heading
+    function precedingHeading(el) {
+      let prev = el.previousElementSibling;
+      while (prev) {
+        if (/^H[1-6]$/.test(prev.tagName)) return prev.textContent.trim().toLowerCase();
+        if (prev.tagName === 'TABLE') return ''; // hit another table — stop
+        prev = prev.previousElementSibling;
+      }
+      const parent = el.parentElement;
+      if (parent && parent !== document.body) return precedingHeading(parent);
+      return '';
+    }
 
-      table.classList.add('tica-sortable');
-      table.dataset.ticaSortable = '1';
+    return precedingHeading(table);
+  }
 
-      let sortColIndex = -1;
-      let sortAsc = true;
+  // Find the table labeled "Details" on the detail page.
+  // Falls back to the first table if no explicitly labeled one is found.
+  function findDetailsTable() {
+    const tables = Array.from(document.querySelectorAll('table'));
+    if (tables.length === 0) return null;
+    const labeled = tables.find(t => getTableLabel(t).includes('detail'));
+    return labeled || tables[0];
+  }
 
-      headers.forEach((th, colIndex) => {
-        th.addEventListener('click', () => {
-          if (sortColIndex === colIndex) {
-            sortAsc = !sortAsc;
-          } else {
-            sortColIndex = colIndex;
-            sortAsc = true;
-          }
+  // Make the "Details" table on the detail page sortable by clicking its headers.
+  function makeDetailTableSortable() {
+    const table = findDetailsTable();
+    if (!table || table.dataset.ticaSortable) return;
 
-          // Update header classes
-          headers.forEach(h => h.classList.remove('tica-sort-asc', 'tica-sort-desc'));
-          th.classList.add(sortAsc ? 'tica-sort-asc' : 'tica-sort-desc');
+    // Prefer <thead> row; fall back to first <tr> anywhere in the table
+    const headerRow = table.tHead
+      ? table.tHead.rows[0]
+      : table.querySelector('tr');
+    if (!headerRow) return;
 
-          // Re-sort the current data rows (they may have grown since init)
-          const currentRows = dataBody
-            ? Array.from(dataBody.rows)
-            : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
+    // Accept <th> elements; fall back to <td> when the table uses no <th>
+    let headers = Array.from(headerRow.querySelectorAll('th'));
+    if (headers.length === 0) headers = Array.from(headerRow.querySelectorAll('td'));
+    if (headers.length === 0) return;
 
-          currentRows.sort((a, b) => {
-            const aCell = a.cells[colIndex];
-            const bCell = b.cells[colIndex];
-            const aVal = aCell ? parseCellValue(aCell) : '';
-            const bVal = bCell ? parseCellValue(bCell) : '';
+    // The body containing data rows
+    const dataBody = table.tBodies[0] || null;
+    const getDataRows = () => dataBody
+      ? Array.from(dataBody.rows)
+      : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
 
-            if (aVal < bVal) return sortAsc ? -1 : 1;
-            if (aVal > bVal) return sortAsc ? 1 : -1;
-            return 0;
-          });
+    if (getDataRows().length === 0) return;
 
-          // Re-append rows in sorted order
-          const parent = dataBody || table;
-          currentRows.forEach(r => parent.appendChild(r));
+    table.classList.add('tica-sortable');
+    table.dataset.ticaSortable = '1';
+
+    let sortColIndex = -1;
+    let sortAsc = true;
+
+    headers.forEach((th, colIndex) => {
+      th.addEventListener('click', () => {
+        if (sortColIndex === colIndex) {
+          sortAsc = !sortAsc;
+        } else {
+          sortColIndex = colIndex;
+          sortAsc = true;
+        }
+
+        // Update sort-direction indicator classes
+        headers.forEach(h => h.classList.remove('tica-sort-asc', 'tica-sort-desc'));
+        th.classList.add(sortAsc ? 'tica-sort-asc' : 'tica-sort-desc');
+
+        // Sort and re-insert rows
+        const rows = getDataRows();
+        rows.sort((a, b) => {
+          const aVal = a.cells[colIndex] ? parseCellValue(a.cells[colIndex]) : '';
+          const bVal = b.cells[colIndex] ? parseCellValue(b.cells[colIndex]) : '';
+          if (aVal < bVal) return sortAsc ? -1 : 1;
+          if (aVal > bVal) return sortAsc ? 1 : -1;
+          return 0;
         });
+
+        const parent = dataBody || table;
+        rows.forEach(r => parent.appendChild(r));
       });
     });
   }
@@ -745,11 +778,12 @@
       };
     }
 
-    makeTablesSortable();
+    makeDetailTableSortable();
 
-    // Re-run after dynamic content renders
-    const observer = new MutationObserver(debounce(makeTablesSortable, 150));
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Use the <detail-page> custom element as the observer root when available
+    const target = document.querySelector('detail-page') || document.body;
+    const observer = new MutationObserver(debounce(makeDetailTableSortable, 200));
+    observer.observe(target, { childList: true, subtree: true });
   }
 
   // Initialize the extension
