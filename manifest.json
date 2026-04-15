@@ -7,7 +7,8 @@
     {
       "matches": [
         "*://ticamembers.org/estimated_standings/*",
-        "*://ticamembers.org/estand-page.html*"
+        "*://ticamembers.org/estand-page.html*",
+        "*://ticamembers.org/detail-page.html*"
       ],
       "js": ["breeds.js", "content.js"],
       "css": ["styles.css"],

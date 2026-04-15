@@ -660,10 +660,106 @@
     observer.observe(target, { childList: true, subtree: true });
   }
 
+  // ============================================================
+  // DETAIL PAGE (detail-page.html) SUPPORT — Sortable Table
+  // ============================================================
+
+  // Parse a cell value for comparison: numeric when possible, otherwise lowercase string
+  function parseCellValue(cell) {
+    const text = cell.textContent.trim();
+    const num = parseFloat(text.replace(/,/g, ''));
+    return isNaN(num) ? text.toLowerCase() : num;
+  }
+
+  // Make all tables on the detail page sortable by clicking their headers
+  function makeTablesSortable() {
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+      if (table.dataset.ticaSortable) return; // already wired up
+
+      // Prefer a <thead> row; fall back to the first row in the table
+      const headerRow = table.tHead
+        ? table.tHead.rows[0]
+        : table.querySelector('tr');
+      if (!headerRow) return;
+      const headers = Array.from(headerRow.querySelectorAll('th'));
+      if (headers.length === 0) return;
+
+      // Determine the body element that contains the data rows
+      const dataBody = table.tBodies[0] || null;
+      const dataRows = dataBody
+        ? Array.from(dataBody.rows)
+        : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
+      if (dataRows.length === 0) return;
+
+      table.classList.add('tica-sortable');
+      table.dataset.ticaSortable = '1';
+
+      let sortColIndex = -1;
+      let sortAsc = true;
+
+      headers.forEach((th, colIndex) => {
+        th.addEventListener('click', () => {
+          if (sortColIndex === colIndex) {
+            sortAsc = !sortAsc;
+          } else {
+            sortColIndex = colIndex;
+            sortAsc = true;
+          }
+
+          // Update header classes
+          headers.forEach(h => h.classList.remove('tica-sort-asc', 'tica-sort-desc'));
+          th.classList.add(sortAsc ? 'tica-sort-asc' : 'tica-sort-desc');
+
+          // Re-sort the current data rows (they may have grown since init)
+          const currentRows = dataBody
+            ? Array.from(dataBody.rows)
+            : Array.from(table.querySelectorAll('tr')).filter(r => r !== headerRow);
+
+          currentRows.sort((a, b) => {
+            const aCell = a.cells[colIndex];
+            const bCell = b.cells[colIndex];
+            const aVal = aCell ? parseCellValue(aCell) : '';
+            const bVal = bCell ? parseCellValue(bCell) : '';
+
+            if (aVal < bVal) return sortAsc ? -1 : 1;
+            if (aVal > bVal) return sortAsc ? 1 : -1;
+            return 0;
+          });
+
+          // Re-append rows in sorted order
+          const parent = dataBody || table;
+          currentRows.forEach(r => parent.appendChild(r));
+        });
+      });
+    });
+  }
+
+  // Initialize for the detail page
+  function initDetailPage() {
+    function debounce(fn, delay) {
+      let timer;
+      return function() {
+        clearTimeout(timer);
+        timer = setTimeout(fn, delay);
+      };
+    }
+
+    makeTablesSortable();
+
+    // Re-run after dynamic content renders
+    const observer = new MutationObserver(debounce(makeTablesSortable, 150));
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   // Initialize the extension
   function init() {
     if (window.location.pathname.includes('estand-page.html')) {
       initNewSite();
+      return;
+    }
+    if (window.location.pathname.includes('detail-page.html')) {
+      initDetailPage();
       return;
     }
     createSeasonDropdown();
