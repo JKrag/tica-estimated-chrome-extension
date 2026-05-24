@@ -1,6 +1,6 @@
 {
   "name": "tica-estimated-standings-enhancer",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Chrome extension that adds season navigation and top 25 highlighting to TICA Estimated Standings pages",
   "private": true,
   "scripts": {

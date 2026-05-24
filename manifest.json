@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "TICA Estimated Standings Enhancer",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Adds season navigation dropdown and top 25 highlighting to TICA Estimated Standings pages",
   "content_scripts": [
     {
       "matches": [
         "*://ticamembers.org/estimated_standings/*",
-        "*://ticamembers.org/estand-page.html*"
+        "*://ticamembers.org/estand-page.html*",
+        "*://ticamembers.org/detail-page.html*"
       ],
       "js": ["breeds.js", "content.js"],
       "css": ["styles.css"],

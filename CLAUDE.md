@@ -9,7 +9,7 @@ This is a Chrome extension project to add features to the website: [TICA unoffic
 ## Development Setup
 
 - Load unpacked extension in Chrome via `chrome://extensions/` with Developer mode enabled
-- Reload extension after changes via the refresh button in chrome://extensions/
+- Reload extension after changes via the refresh button in chrome://extensions/ or by calling http://reload.extensions in Chrome (exposed by the Extensions Reloader 2.0 extension)
 
 ## Architecture
 
@@ -22,37 +22,15 @@ Chrome Manifest V3 extension with content scripts injected on `ticamembers.org/e
 - `styles.css` - Visual styling (highlighting colors, dropdown appearance, breed code colors)
 - `breeds.js` - Breed code to coat length mapping (shorthair/longhair sets from TICA Standing Rules)
 
-## Features
+## Living documents — keep these up to date
 
-### Season Navigation Dropdown
+When you make changes, update the relevant files before committing:
 
-Dropdown menu injected at the top of each page allowing quick navigation between show seasons (2012-13 through current) without returning to the main landing page.
+| File                | Update when                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| @ROADMAP.md         | An issue is completed (mark ✅) or a new one is scoped                                                                |
+| @FEATURES.md        | A new feature is implemented or an existing one is updated                                                            |
+| @CHANGELOG.md       | A PR is ready — add a section summarizing what changed and why                                                        |
+| @WORLD-KNOWLEDGE.md | You discover or correct a fact about an external system (URL format, auth requirements, field structure, dom details) |
 
-### Top 25 Highlighting
-
-- **Gold highlighting** for top 25 all-breed rankings on all ranking pages (`est_*.htm`)
-- Works on dedicated pages (kittens, cats, alters, HHP) and regional pages with multiple sections
-
-### Championship Cat SH/LH Distinction
-
-For championship cats only (not kittens/alters/HHP):
-
-- **Teal highlighting** for shorthair runners-up who make top 25 SH (ranks 26+)
-- **Pink highlighting** for longhair runners-up who make top 25 LH (ranks 26+)
-- **Colored breed codes** on all championship pages: blue for SH breeds, pink for LH breeds
-- **Computed SH/LH ranking columns** on first championship page (`est_cat1.htm`) showing each cat's rank within their coat category
-- Runner-up highlighting only appears on first page or regional sections where counts are accurate
-
-### Regional Page Support
-
-Regional pages contain all categories (Kittens, Championship Cats, Alters, HHP) in a single table. The extension detects section headers and applies appropriate highlighting rules per section, resetting counts for each.
-
-## Desired Features
-
-### Section Navigation on Regional Pages
-
-Regional pages have multiple sections (Kittens, Cats, Alters, HHP Kittens, HHP) in one long page. Add a navigation element (dropdown or buttons) to quickly jump to each section within the page.
-
-### Hover Tooltips for Breed Codes and Region codes
-
-Add hover tooltips to breed codes and region codes explaining their meanings (e.g., "OL" = Oriental Longhair, "GL" = Great Lakes Region).
+Remember to consult these documents as needed before starting work on new features, to ensure your changes align with the overall project direction and to avoid duplicating efforts.

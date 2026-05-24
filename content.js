@@ -660,10 +660,192 @@
     observer.observe(target, { childList: true, subtree: true });
   }
 
+  // ============================================================
+  // DETAIL PAGE (detail-page.html) SUPPORT — Sortable Table
+  // ============================================================
+
+  // Parse a cell value for comparison: numeric when possible, otherwise lowercase string
+  function parseCellValue(cell) {
+    const text = cell.textContent.trim();
+    const num = parseFloat(text.replace(/,/g, ''));
+    return isNaN(num) ? text.toLowerCase() : num;
+  }
+
+  // detail-page.html uses nested web components with open shadow DOM:
+  //   document -> <detail-page> (shadow) -> <detail-table> (shadow) -> <table>
+  // Regular querySelector and MutationObserver cannot cross shadow boundaries,
+  // so we must pierce each shadow root explicitly.
+
+  function findDetailTableEl() {
+    const detailPage = document.querySelector('detail-page');
+    return detailPage?.shadowRoot?.querySelector('detail-table') || null;
+  }
+
+  function findSortableTable() {
+    const detailTableEl = findDetailTableEl();
+    if (detailTableEl?.shadowRoot) return detailTableEl.shadowRoot.querySelector('table');
+    const detailPage = document.querySelector('detail-page');
+    if (detailPage?.shadowRoot) return detailPage.shadowRoot.querySelector('table');
+    return document.querySelector('table');
+  }
+
+  const SORT_STYLES = `
+.tica-sortable th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  position: relative;
+  padding-right: 20px !important;
+  transition: background-color 0.15s;
+}
+.tica-sortable th:hover { background-color: rgba(0,0,0,0.06); }
+.tica-sortable th::after { content: '⇅'; position: absolute; right: 4px; opacity: 0.35; font-size: 0.8em; }
+.tica-sortable th.tica-sort-asc::after { content: '↑'; opacity: 0.85; }
+.tica-sortable th.tica-sort-desc::after { content: '↓'; opacity: 0.85; }
+.tica-sortable th.tica-sort-asc, .tica-sortable th.tica-sort-desc { background-color: rgba(0,0,0,0.05); }
+`;
+
+  function injectSortStyles(shadowRoot) {
+    if (!shadowRoot || shadowRoot.querySelector('style[data-tica-sort]')) return;
+    const style = document.createElement('style');
+    style.setAttribute('data-tica-sort', '1');
+    style.textContent = SORT_STYLES;
+    shadowRoot.appendChild(style);
+  }
+
+  // Make the first (Details) table on the detail page sortable by clicking its headers.
+  // The Details table has no <thead>; its first usable header row is the first <tr>
+  // that contains <th> elements with non-empty text (earlier rows may have empty <th>s).
+  function makeDetailTableSortable() {
+    const table = findSortableTable();
+    if (!table || table.dataset.ticaSortable) return;
+
+    // Find the first <tr> whose <th> cells have actual text content
+    const allRows = Array.from(table.querySelectorAll('tr'));
+    const headerRow = allRows.find(row => {
+      const ths = row.querySelectorAll('th');
+      return ths.length > 0 && Array.from(ths).some(th => th.textContent.trim() !== '');
+    });
+    if (!headerRow) return;
+
+    // Data rows queried live each time — header index recomputed to handle re-renders
+    const getDataRows = () => {
+      const rows = Array.from(table.querySelectorAll('tr'));
+      const hdrIdx = rows.indexOf(
+        rows.find(row => {
+          const ths = row.querySelectorAll('th');
+          return ths.length > 0 && Array.from(ths).some(t => t.textContent.trim() !== '');
+        })
+      );
+      return hdrIdx === -1 ? [] : rows.slice(hdrIdx + 1).filter(r => r.querySelector('td'));
+    };
+
+    if (getDataRows().length === 0) return;
+
+    // Inject sort styles into the shadow root that hosts the table
+    injectSortStyles(table.getRootNode());
+
+    table.classList.add('tica-sortable');
+    table.dataset.ticaSortable = '1';
+
+    let sortColIndex = -1;
+    let sortAsc = true;
+
+    // Use event delegation on the table to survive re-renders and nested-element clicks
+    table.addEventListener('click', (e) => {
+      const th = e.target.closest('th');
+      if (!th) return;
+
+      // cellIndex is always correct regardless of re-renders or DOM structure
+      const colIndex = th.cellIndex;
+      if (colIndex === -1) return;
+
+      // Re-query live headers for indicator updates
+      const currentAllRows = Array.from(table.querySelectorAll('tr'));
+      const currentHeaderRow = currentAllRows.find(row => {
+        const ths = row.querySelectorAll('th');
+        return ths.length > 0 && Array.from(ths).some(t => t.textContent.trim() !== '');
+      });
+      const liveHeaders = currentHeaderRow ? Array.from(currentHeaderRow.querySelectorAll('th')) : [];
+
+      if (sortColIndex === colIndex) {
+        sortAsc = !sortAsc;
+      } else {
+        sortColIndex = colIndex;
+        sortAsc = true;
+      }
+
+      // Update sort-direction indicator classes
+      liveHeaders.forEach(h => h.classList.remove('tica-sort-asc', 'tica-sort-desc'));
+      th.classList.add(sortAsc ? 'tica-sort-asc' : 'tica-sort-desc');
+
+      // Sort and re-insert rows
+      const rows = getDataRows();
+      rows.sort((a, b) => {
+        const aVal = a.cells[colIndex] ? parseCellValue(a.cells[colIndex]) : '';
+        const bVal = b.cells[colIndex] ? parseCellValue(b.cells[colIndex]) : '';
+        if (aVal < bVal) return sortAsc ? -1 : 1;
+        if (aVal > bVal) return sortAsc ? 1 : -1;
+        return 0;
+      });
+
+      const parent = rows[0]?.parentElement || headerRow.parentElement;
+      rows.forEach(r => parent.appendChild(r));
+    });
+  }
+
+  // Initialize for the detail page
+  function initDetailPage() {
+    function debounce(fn, delay) {
+      let timer;
+      return function() {
+        clearTimeout(timer);
+        timer = setTimeout(fn, delay);
+      };
+    }
+
+    const debouncedMake = debounce(makeDetailTableSortable, 200);
+
+    function attachShadowObservers() {
+      const detailPage = document.querySelector('detail-page');
+      if (!detailPage?.shadowRoot) return false;
+
+      // Observe detail-page's shadow root for the detail-table element appearing
+      const dpObserver = new MutationObserver(debouncedMake);
+      dpObserver.observe(detailPage.shadowRoot, { childList: true, subtree: true });
+
+      // Also observe detail-table's shadow root if it already exists
+      const detailTableEl = detailPage.shadowRoot.querySelector('detail-table');
+      if (detailTableEl?.shadowRoot) {
+        const dtObserver = new MutationObserver(debouncedMake);
+        dtObserver.observe(detailTableEl.shadowRoot, { childList: true, subtree: true });
+      }
+
+      return true;
+    }
+
+    makeDetailTableSortable();
+
+    if (!attachShadowObservers()) {
+      // Shadow roots not ready yet — watch document.body until detail-page appears
+      const bodyObserver = new MutationObserver(debounce(() => {
+        if (attachShadowObservers()) {
+          bodyObserver.disconnect();
+          makeDetailTableSortable();
+        }
+      }, 100));
+      bodyObserver.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
   // Initialize the extension
   function init() {
     if (window.location.pathname.includes('estand-page.html')) {
       initNewSite();
+      return;
+    }
+    if (window.location.pathname.includes('detail-page.html')) {
+      initDetailPage();
       return;
     }
     createSeasonDropdown();
