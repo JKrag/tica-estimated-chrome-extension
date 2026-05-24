@@ -728,8 +728,6 @@
     });
     if (!headerRow) return;
 
-    const headers = Array.from(headerRow.querySelectorAll('th'));
-
     // Data rows queried live each time — header index recomputed to handle re-renders
     const getDataRows = () => {
       const rows = Array.from(table.querySelectorAll('tr'));
